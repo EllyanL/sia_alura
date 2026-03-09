@@ -1,4 +1,4 @@
-from langchain_ollama import ChatOllama
+from langchain_openai import ChatOpenAI
 from langchain.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
 from pydantic import BaseModel, Field
@@ -23,31 +23,32 @@ parser_champion=JsonOutputParser(pydantic_object=champion)
 parser_counter=JsonOutputParser(pydantic_object=counter)
 
 model_prompt_champion = PromptTemplate(
-    input_variables=["lanes"],
-    template="""Responda sempre em Portugues Brasileiro. Sugira um campeão para a lane {lanes}, para uma partida solo/duo de league of legends, apenas um campeão, e diga uma vantagem desse campeão de maneira sucinta.{format}""",
+    input_variables=["champ"],
+    template="""Responda sempre em Portugues Brasileiro. Qual a vantagem do {champ}, para uma partida solo/duo de league of legends.{format}""",
     partial_variables={"format": parser_champion.get_format_instructions()}
 )
 
 model_prompt_counter = PromptTemplate(
-    template="""Responda sempre em Portugues Brasileiro. Sugira um campeão counter de {name}, para uma partida solo/duo de league of legends, apenas um campeão, e diga uma vantagem desse campeão de maneira sucinta.{format}""",
+    template="""Responda sempre em Portugues Brasileiro. Sugira um campeão counter de {name}, para uma partida solo/duo de league of legends, apenas um campeão.{format}""",
     partial_variables={"format": parser_counter.get_format_instructions()}
 )
 
-model = ChatOllama(
-    base_url="http://172.16.31.218:11434",
-    model="llama3:8b",  
+model = ChatOpenAI(
+    base_url=f"http://{os.getenv('IP_ADDRESS')}/v1",
+    api_key="EMPTY",
+    model="openai/gpt-oss-20b",  
     temperature=0.7,
-    format="json"
-)
+).bind(response_format={"type": "json_object"})
+
 
 
 chain_champion = model_prompt_champion | model | parser_champion    
-response_champion = chain_champion.invoke({"lanes": "support"})
+response_champion = chain_champion.invoke({"champ": "Viego"})
 
 chain_counter = model_prompt_counter | model | parser_counter
 response_counter = chain_counter.invoke({"name": response_champion['name']})
 
 
 
-print(f"Eu recomendo: {response_champion['name']} - Vantagem: {response_champion['advantage']}")
+print(f"{response_champion['name']} - Vantagem: {response_champion['advantage']}")
 print(f"\n Contra {response_champion['name']} posso usar: {response_counter['name']} - Vantagem: {response_counter['advantage']}")
