@@ -36,7 +36,7 @@ model_prompt_counter = PromptTemplate(
 model = ChatOpenAI(
     base_url=f"http://{os.getenv('IP_ADDRESS')}/v1",
     api_key="EMPTY",
-    model="openai/gpt-oss-20b",  
+    model="openai/gpt-oss-20b",     
     temperature=0.7,
 ).bind(response_format={"type": "json_object"})
 
